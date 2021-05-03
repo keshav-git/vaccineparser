@@ -1,0 +1,43 @@
+########################################
+# Vaccine Slot Parser
+# Inputs: State, Distict
+# Deps: unix shell, cURL and jq
+# Author: Keshav
+# Public Space
+########################################
+
+#!/bin/sh
+
+if [ $# -ne 2 ]; then
+	echo "Usage vaccinemilegekiya <State> <District>"
+	echo "Keep First latter capital"
+	exit 0
+fi
+
+state="$1"
+district="$2"
+
+tarik=$(date +%d-%m-%Y)
+
+url="https://cdn-api.co-vin.in/api/v2"
+
+state_id=$(curl -s -X GET "${url}/admin/location/states" -H "accept: application/json" \
+	| jq --arg STATE "${state}" '.states[]
+	| select(.state_name==$STATE)
+	| .state_id')
+
+district_id=$(curl -s -X GET "${url}/admin/location/districts/$state_id" -H "accept: application/json" \
+	| jq --arg DIST "${district}" '.districts[]
+	| select(.district_name==$DIST)
+	| .district_id')
+
+Centers=$(curl -s -X GET \
+	"${url}/appointment/sessions/public/findByDistrict?district_id=${district_id}&date=${tarik}" \
+	-H  "accept: application/json" \
+	| jq --arg AGE "${age}" '.sessions[] 
+	| select(.min_age_limit==18) 
+	| .name')
+
+message=$(printf "Ha Ha Jarur Milegi LaLa, Bus tu Slot book kar \n Slots:\n%s\n" "$Centers")
+
+[ -z "${Centers}" ] || notification "${message}"

@@ -1,0 +1,18 @@
+################################
+# Notificatio via Telegram Bot
+# Inputs: Chat_id, Message
+# Author: Keshav
+# Public Space
+#################################
+
+#!/bin/sh
+
+if [ $# -ne 2 ]; then
+        echo "Usage notification <CHAT_ID <MESSAGE>"
+        exit 0
+fi
+
+TOKEN="1347822743:AAEd7t5DLicQW3xvwrARGh0uCRy_q-Ubqa4"
+URL="https://api.telegram.org/bot$TOKEN/sendMessage"
+
+curl -s -X POST $URL -d chat_id=$1 -d text="$2" 2>1 > /dev/null
