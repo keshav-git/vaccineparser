@@ -16,7 +16,7 @@ fi
 
 state="$1"
 district="$2"
-chatid="$3"
+chat_id="$3"
 url="https://cdn-api.co-vin.in/api/v2"
 
 if [ $(date +%H) -lt 10 ]; then
@@ -25,15 +25,23 @@ else
 	tarik=$(date --date="next day" +%d-%m-%Y)
 fi
 
-state_id=$(curl -s -X GET "${url}/admin/location/states" -H "accept: application/json" \
-	| jq --arg STATE "${state}" '.states[]
-	| select(.state_name==$STATE)
-	| .state_id')
+if [ -s info ]; then
+	state_id=$(cut -d' ' -f1 info)
+	district_id=$(cut -d' ' -f2 info)
+else
+	state_id=$(curl -s -X GET "${url}/admin/location/states" -H "accept: application/json" \
+		| jq --arg STATE "${state}" '.states[]
+		| select(.state_name==$STATE)
+		| .state_id')
 
-district_id=$(curl -s -X GET "${url}/admin/location/districts/$state_id" -H "accept: application/json" \
-	| jq --arg DIST "${district}" '.districts[]
-	| select(.district_name==$DIST)
-	| .district_id')
+	district_id=$(curl -s -X GET "${url}/admin/location/districts/$state_id" -H "accept: application/json" \
+		| jq --arg DIST "${district}" '.districts[]
+		| select(.district_name==$DIST)
+		| .district_id')
+
+	echo "$state_id $district_id" > info
+fi
+
 
 Centers=$(curl -s -X GET \
 	"${url}/appointment/sessions/public/findByDistrict?district_id=${district_id}&date=${tarik}" \
@@ -44,4 +52,4 @@ Centers=$(curl -s -X GET \
 
 message=$(printf "Ha Ha Jarur Milegi LaLa, Bus tu Slot book kar \n Slots:\n%s\n" "$Centers")
 
-[ -z "${Centers}" ] || notification "${chatid}" "${message}"
+[ -z "${Centers}" ] || ./notification "${chat_id}" "${message}"
