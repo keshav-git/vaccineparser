@@ -8,14 +8,15 @@
 
 #!/bin/sh
 
-if [ $# -ne 2 ]; then
-	echo "Usage vaccinemilegekiya <State> <District>"
+if [ $# -ne 3 ]; then
+	echo "Usage vaccinemilegekiya <State> <District> <Chat id>"
 	echo "Keep First latter capital"
 	exit 0
 fi
 
 state="$1"
 district="$2"
+chatid="$3"
 url="https://cdn-api.co-vin.in/api/v2"
 
 if [ $(date +%H) -lt 10 ]; then
@@ -43,4 +44,4 @@ Centers=$(curl -s -X GET \
 
 message=$(printf "Ha Ha Jarur Milegi LaLa, Bus tu Slot book kar \n Slots:\n%s\n" "$Centers")
 
-[ -z "${Centers}" ] || notification "${message}"
+[ -z "${Centers}" ] || notification "${chatid}" "${message}"
