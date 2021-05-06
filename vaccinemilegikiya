@@ -8,33 +8,41 @@
 
 #!/bin/sh
 
+# Checking if no of passed arguments are 3
 if [ $# -ne 3 ]; then
 	echo "Usage vaccinemilegekiya <State> <District> <Chat id>"
 	echo "Keep First latter capital"
 	exit 0
 fi
 
+# Argumemnts
 state="$1"
 district="$2"
 chat_id="$3"
-url="https://cdn-api.co-vin.in/api/v2"
 
+# Url and user-agent
+url="https://cdn-api.co-vin.in/api/v2"
+user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
+
+# Fixing date
 if [ $(date +%H) -lt 10 ]; then
 	tarik=$(date +%d-%m-%Y)
 else
 	tarik=$(date --date="next day" +%d-%m-%Y)
 fi
 
+# If info exist, use that to find stateid and district id
 if [ -s info ]; then
 	state_id=$(cut -d' ' -f1 info)
 	district_id=$(cut -d' ' -f2 info)
+# Else parse cowin database
 else
-	state_id=$(curl -s -X GET "${url}/admin/location/states" -H "accept: application/json" \
+	state_id=$(curl -s -A "${user_agent}" -X GET "${url}/admin/location/states" -H "accept: application/json" \
 		| jq --arg STATE "${state}" '.states[]
 		| select(.state_name==$STATE)
 		| .state_id')
 
-	district_id=$(curl -s -X GET "${url}/admin/location/districts/$state_id" -H "accept: application/json" \
+	district_id=$(curl -s -A "${user_agent}" -X GET "${url}/admin/location/districts/$state_id" -H "accept: application/json" \
 		| jq --arg DIST "${district}" '.districts[]
 		| select(.district_name==$DIST)
 		| .district_id')
@@ -43,13 +51,17 @@ else
 fi
 
 
-Centers=$(curl -s -X GET \
+# Find available centers
+Centers=$(curl -s -A "${user_agent}" -X GET \
 	"${url}/appointment/sessions/public/findByDistrict?district_id=${district_id}&date=${tarik}" \
 	-H  "accept: application/json" \
 	| jq --arg AGE "${age}" '.sessions[]
 	| select(.min_age_limit==18)
 	| .name')
 
+
+# Create Message
 message=$(printf "Ha Ha Jarur Milegi LaLa, Bus tu Slot book kar \n Slots:\n%s\n" "$Centers")
 
+# Send Notification
 [ -z "${Centers}" ] || ./notification "${chat_id}" "${message}"
